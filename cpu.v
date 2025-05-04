@@ -41,17 +41,19 @@ module m_top();
   reg [31:0] r_pc = 0;
   wire [31:0] inst_out, w_next_pc;
   m_ex ex(r_clk, r_pc, inst_out, w_next_pc);
-  // m_sync_mem mem(w_clk, r_pc, inst_out);
+  reg is_pc_updated = 1;
   always @(posedge r_clk) begin
-    r_pc <= w_next_pc;
+    is_pc_updated = ~is_pc_updated;
+    if (is_pc_updated) r_pc <= w_next_pc;
   end
   initial #99 forever begin
-    #50;
+    #100;
     $display("time: %3d", $time);
     $display("r_clk:        %b", r_clk);
     $display("r_pc:          %5d", r_pc);
     $display("inst:        %b ", inst_out);
     $display("next_pc:        %5d", w_next_pc);
+    $display("pc updated:        %5d", is_pc_updated);
     $display("====");
   end
   initial #700 $finish;
