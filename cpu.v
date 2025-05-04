@@ -11,28 +11,12 @@ module m_RF(w_clk, w_rs1, w_rs2, w_write_enabled, w_write_addr, w_write_data, w_
   always @(posedge w_clk) if (w_write_enabled & w_write_addr == 5'd30) $finish;
 endmodule
 
-module m_sync_mem(w_clk, w_pc, r_inst_out);
-    input wire w_clk;
-    input wire [31:0] w_pc;
-    output reg [31:0] r_inst_out;
-    reg[31:0] mem[0:63];
-    always @(posedge w_clk) begin 
-      r_inst_out <= mem[w_pc[7:2]];
-    end
-    initial begin
-        mem[0]=32'b0;
-        mem[1]=32'd1;
-        mem[2]=32'd2;
-        mem[3]=32'd4;
-    end
-endmodule
-
 module m_ex(w_clk, w_pc, r_inst_out, w_next_pc);
   input wire w_clk;
   input wire [31:0] w_pc;
   output wire [31:0] r_inst_out, w_next_pc;
 
-  m_sync_mem mem(w_clk, w_pc, r_inst_out);
+  imem mem(w_clk, w_pc, r_inst_out);
   assign w_next_pc = w_pc + 4;
 endmodule
 
