@@ -1,4 +1,4 @@
-module imem(w_clk, w_pc, r_inst_out);
+module imem(w_pc, w_clk, r_inst_out);
     input wire w_clk;
     input wire [31:0] w_pc;
     output reg [31:0] r_inst_out;
