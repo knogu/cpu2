@@ -24,7 +24,9 @@ module TopModule(
 
     reg [31:0] r_pc = 0;
     wire [31:0] inst_out, w_next_pc;
-    m_ex ex(c2, r_pc, inst_out, w_next_pc);
+    wire[31:0] w_rs1_val, w_rs2_val, w_alu_res;
+    wire[11:0] w_imm;
+    m_ex ex(r_clk, r_pc, w_next_pc, w_imm, w_rs1_val, w_rs2_val, w_alu_res);
     reg is_pc_updated = 1;
     always @(posedge c2) begin
         is_pc_updated = ~is_pc_updated;
@@ -32,19 +34,19 @@ module TopModule(
     end
 	
     wire [7:0] imm_dec;
-    m_seven_segment seg1(ex.w_imm[3:0], imm_dec);
+    m_seven_segment seg1(w_imm[3:0], imm_dec);
     assign HEX0 = imm_dec;
 
     wire [7:0] rs1_val;
-    m_seven_segment seg2(ex.w_rs1_val[3:0], rs1_val);
+    m_seven_segment seg2(w_rs1_val[3:0], rs1_val);
     assign HEX1 = rs1_val;
 
     wire [7:0] rs2_val;
-    m_seven_segment seg3(ex.w_rs2_val[3:0], rs2_val);
+    m_seven_segment seg3(w_rs2_val[3:0], rs2_val);
     assign HEX2 = rs2_val;
     
     wire [7:0] alu_res_dec;
-    m_seven_segment seg4(ex.w_alu_res[3:0], alu_res_dec);
+    m_seven_segment seg4(w_alu_res[3:0], alu_res_dec);
     assign HEX3 = alu_res_dec;
 
     wire [7:0] pc_dec;
