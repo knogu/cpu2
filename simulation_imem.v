@@ -6,9 +6,4 @@ module imem(addr, w_clk, r_inst_out);
     always @(posedge w_clk) begin 
       r_inst_out <= mem[addr];
     end
-    initial begin
-        mem[0]=32'b00000000000100000000000010010011;
-        mem[1]=32'b00000000001000000000000100010011;
-        mem[2]=32'b00000000001000001000000110110011;
-    end
 endmodule

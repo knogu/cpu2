@@ -54,7 +54,7 @@ module m_ex(
     output wire [31:0] w_inst
   );
 
-  imem mem(w_pc[7:2], w_clk, w_inst);
+  imem imem(w_pc[7:2], w_clk, w_inst);
   // wire[31:0] w_rs1_val, w_rs2_val, w_alu_res;
   m_RF rf(w_clk, w_inst[19:15], w_inst[24:20], 1'b1, w_inst[11:7], w_alu_res, w_rs1_val, w_rs2_val);
   // wire[11:0] w_imm;
@@ -96,6 +96,10 @@ module m_top();
     $display("second_operand: %5d", ex.second_operand);
     $display("alu_res:        %5d", ex.w_alu_res);
     $display("====");
+  end
+  initial begin
+    `define MM ex.imem.mem
+    `include "asm.txt"
   end
   initial #900 $finish;
 endmodule
