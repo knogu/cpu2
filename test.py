@@ -61,7 +61,7 @@ assertions2 = [
     {"pc": 4, "x1": 7},
     {"pc": 4, "rs2": 1, "rs1": 0, "imm": 8, "alu_res": 8, "result": 8},
     {"pc": 8},
-    {"pc": 8, "rd": 2, "imm": 8, "rs1": 0, "alu_res": 8, "result": 7},
+    {"pc": 8, "rd": 2, "imm": 8, "second_operand": 8, "rs1": 0, "alu_res": 8, "result": 7},
     {"pc": 12, "x2": 7}
 ]
 
