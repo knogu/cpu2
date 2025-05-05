@@ -49,18 +49,21 @@ assertions0 = [
 #     {"pc": 16}
 # ]
 
-# insts2 = [
-#     "`MM[0]={12'd7,5'd0,3'd0,5'd1,7'h13};     // addi x1,x0,7",
-#     "`MM[1]={7'd0,5'd1,5'd0,3'h2,5'd8,7'h23}; // sw x1, 8(x0)",
-#     "`MM[2]={12'd8,5'd0,3'b010,5'd2,7'h3};    // lw x2, 8(x0)",
-# ]
+insts2 = [
+    "`MM[0]={12'd7,5'd0,3'd0,5'd1,7'h13};     // addi x1,x0,7",
+    "`MM[1]={7'd0,5'd1,5'd0,3'h2,5'd8,7'h23}; // sw x1, 8(x0)",
+    "`MM[2]={12'd8,5'd0,3'b010,5'd2,7'h3};    // lw x2, 8(x0)",
+]
 
-# assertions2 = [
-#     {"pc": 0, "rs1_val": 0, "imm": 7, "2nd_operand": 7, "wbdata": 7, "rd": 1},
-#     {"pc": 4, "imm": 8, "rs1": 0, "rs2": 1},
-#     {"pc": 8, "imm": 8, "rd": 2, "rs1": 0, "wbdata": 7},
-#     {"x2": 7}
-# ]
+assertions2 = [
+    {"pc": 0},
+    {"pc": 0, "rd": 1, "rs1": 0, "imm": 7},
+    {"pc": 4, "x1": 7},
+    {"pc": 4, "rs2": 1, "rs1": 0, "imm": 8},
+    {"pc": 8},
+    {"pc": 8, "rd": 2, "imm": 8, "rs1": 0},
+    {"pc": 12, "x2": 7}
+]
 
 # insts3 = [
 #     "`MM[0]={1'b0,10'b0000000100,1'b0,8'b00000000,5'd1,7'b1101111};     // jal 8",
@@ -110,7 +113,7 @@ assertions0 = [
 #     {"pc": 8, "x1": 4294963204},
 # ]
 
-scenarios = [(insts0, assertions0)]
+scenarios = [(insts0, assertions0), (insts2, assertions2)]
 
 for ith, (insts, assertions) in enumerate(scenarios, start=0):
     for j, inst in enumerate(insts):
