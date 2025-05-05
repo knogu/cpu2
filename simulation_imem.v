@@ -7,9 +7,8 @@ module imem(addr, w_clk, r_inst_out);
       r_inst_out <= mem[addr];
     end
     initial begin
-        mem[0]=32'b0;
-        mem[1]=32'd1;
-        mem[2]=32'd2;
-        mem[3]=32'd4;
+        mem[0]=32'b00000000000100000000000010010011;
+        mem[1]=32'b00000000001000000000000100010011;
+        mem[2]=32'b00000000001000001000000110110011;
     end
 endmodule
