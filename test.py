@@ -57,11 +57,11 @@ insts2 = [
 
 assertions2 = [
     {"pc": 0},
-    {"pc": 0, "rd": 1, "rs1": 0, "imm": 7},
+    {"pc": 0, "rd": 1, "rs1": 0, "imm": 7, "alu_res": 7, "result": 7},
     {"pc": 4, "x1": 7},
-    {"pc": 4, "rs2": 1, "rs1": 0, "imm": 8},
+    {"pc": 4, "rs2": 1, "rs1": 0, "imm": 8, "alu_res": 8, "result": 8},
     {"pc": 8},
-    {"pc": 8, "rd": 2, "imm": 8, "rs1": 0},
+    {"pc": 8, "rd": 2, "imm": 8, "rs1": 0, "alu_res": 8, "result": 7},
     {"pc": 12, "x2": 7}
 ]
 

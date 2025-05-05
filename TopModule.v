@@ -24,8 +24,8 @@ module TopModule(
 
     reg [31:0] r_pc = 0;
     wire [31:0] w_next_pc;
-    wire[31:0] w_inst, w_alu_res, w_result, w_mem_out;
-    m_ex ex(c2, r_pc, w_next_pc, w_alu_res, w_result, w_inst, w_mem_out);
+    wire[31:0] w_inst, w_alu_res, w_result, w_mem_out, second_operand;
+    m_ex ex(c2, r_pc, w_next_pc, w_alu_res, w_result, w_inst, w_mem_out, second_operand);
     reg is_pc_updated = 1;
     always @(posedge c2) begin
         is_pc_updated = ~is_pc_updated;
@@ -51,5 +51,9 @@ module TopModule(
     wire [7:0] result_dec;
     m_seven_segment seg5(w_result[3:0], result_dec);
     assign HEX4 = result_dec;
+
+    wire [7:0] second_operand_dec;
+    m_seven_segment seg5(second_operand[3:0], second_operand_dec);
+    assign HEX5 = second_operand_dec;
 
 endmodule

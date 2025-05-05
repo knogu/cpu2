@@ -72,7 +72,8 @@ module m_ex(
     output wire [31:0] w_alu_res,
     output wire [31:0] w_result,
     output wire [31:0] w_inst,
-    output wire [31:0] w_mem_out
+    output wire [31:0] w_mem_out,
+    output wire [31:0] second_operand
   );
 
   imem imem(w_pc[7:2], w_clk, w_inst);
@@ -87,7 +88,6 @@ module m_ex(
   main_decoder dec(w_inst[6:0], imm_src, alu_src, is_mem_write, is_result_from_mem, is_reg_write);
   m_imm_gen imm_gen(w_clk, w_inst, imm_src, w_imm);
   
-  wire [31:0] second_operand;
   m_mux second_operand_chooser(w_rs2_val, w_imm, alu_src, second_operand);
   m_alu alu(w_rs1_val, second_operand, w_alu_res);
 
@@ -105,8 +105,8 @@ module m_top();
   reg [31:0] r_pc = 0;
   wire [31:0] w_next_pc;
   // wire[31:0] w_inst, w_rs1_val, w_rs2_val, w_imm;
-  wire[31:0] w_result, w_alu_res, w_mem_out;
-  m_ex ex(r_clk, r_pc, w_next_pc, w_alu_res, w_result, w_inst, w_mem_out);
+  wire[31:0] w_result, w_alu_res, w_mem_out, w_inst, w_second_operand;
+  m_ex ex(r_clk, r_pc, w_next_pc, w_alu_res, w_result, w_inst, w_mem_out, w_second_operand);
   reg is_pc_updated = 1;
   always @(posedge r_clk) begin
     is_pc_updated = ~is_pc_updated;
