@@ -52,5 +52,9 @@ module TopModule(
     wire [7:0] pc_dec;
     m_seven_segment seg5(r_pc[3:0], pc_dec);
     assign HEX4 = pc_dec;
+
+    wire [7:0] inst_dec;
+    m_seven_segment seg6(w_inst[3:0], inst_dec);
+    assign HEX5 = inst_dec;
 	
 endmodule
