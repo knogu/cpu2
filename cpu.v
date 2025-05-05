@@ -12,6 +12,20 @@ module m_RF(w_clk, w_rs1, w_rs2, w_write_enabled, w_write_addr, w_write_data, w_
   integer i; initial for (i=0; i<32; i=i+1) mem[i]=0;
 endmodule
 
+module m_mem(input wire w_clk,
+  input wire [31:0] w_addr,
+  input wire w_write_enabled,
+  input wire [31:0] w_write_data,
+  output wire [31:0] w_mem_out);
+
+  reg [31:0] mem [0:63];
+  assign w_mem_out = mem[w_write_addr[7:2]];
+  always @(posedge w_clk) begin
+    if (w_write_enabled) mem[w_addr[7:2]] <= w_write_data;
+  end
+  integer i; initial for (i=0; i<64; i=i+1) mem[i] = 32'b0;
+endmodule
+
 module m_mux(w_in1, w_in2, w_sel, w_out);
     input wire [31:0] w_in1, w_in2;
     input wire w_sel;
@@ -21,13 +35,15 @@ endmodule
 
 module main_decoder(input wire [6:0] opcode,
   output wire [1:0] immSrc,
-  output wire second_operand_src);
+  output wire second_operand_src,
+  output wire is_mem_write);
   assign immSrc =
     (opcode == 7'b0010011) ? 2'b00 :
     (opcode == 7'b0100011) ? 2'b01 :
     (opcode == 7'b1100011) ? 2'b10 :
     2'b11;
   assign second_operand_src = (opcode == 7'b0010011) | (opcode == 7'b0000011) | (opcode == 7'b0100011);
+  assign is_mem_write = (opcode == 7'b0100011);
 endmodule
 
 module m_imm_gen(input wire w_clk,
@@ -60,12 +76,19 @@ module m_ex(
   // wire[11:0] w_imm;
   wire [1:0] imm_src;
   wire alu_src;
-  main_decoder dec(w_inst[6:0], imm_src, alu_src);
+  wire is_mem_write;
+  wire [31:0] w_mem_out;
+  main_decoder dec(w_inst[6:0], imm_src, alu_src, is_mem_write);
   m_imm_gen imm_gen(w_clk, w_inst, imm_src, w_imm);
   
   wire [31:0] second_operand;
   m_mux second_operand_chooser(w_rs2_val, w_imm, alu_src, second_operand);
   m_alu alu(w_rs1_val, second_operand, w_alu_res);
+
+  // Memory Access
+  m_mem mem(w_clk, w_alu_res, is_mem_write, , w_rs2_val, w_mem_out);
+
+  // Write Back
 
   assign w_next_pc = w_pc + 4;
 endmodule
@@ -86,7 +109,7 @@ module m_top();
     #100;
     $display("time: %3d", $time);
     $display("r_clk:        %b", r_clk);
-    $display("r_pc:          %5d", r_pc);
+    $display("pc:          %5d", r_pc);
     $display("inst:        %b ", ex.w_inst);
     $display("next_pc:        %5d", w_next_pc);
     $display("pc updated:     %5d", is_pc_updated);
