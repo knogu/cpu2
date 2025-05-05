@@ -12,18 +12,29 @@ module m_RF(w_clk, w_rs1, w_rs2, w_write_enabled, w_write_addr, w_write_data, w_
   integer i; initial for (i=0; i<32; i=i+1) mem[i]=0;
 endmodule
 
-module m_imm_gen(w_clk, w_inst, w_imm);
-  input wire w_clk;
-  input wire [31:0] w_inst;
-  output wire [11:0] w_imm;
-  assign w_imm = w_inst[31:20];
+module main_decoder(input wire [6:0] opcode,
+  output wire [1:0] immSrc);
+  assign immSrc =
+    (opcode == 7'b0010011) ? 2'b00 :
+    (opcode == 7'b0100011) ? 2'b01 :
+    (opcode == 7'b1100011) ? 2'b10 :
+    2'b11;
+endmodule
+
+module m_imm_gen(input wire w_clk,
+  input wire [31:0] w_inst,
+  input wire [1:0] alu_src,
+  output wire [31:0] w_imm
+); 
+  assign w_imm = alu_src == 2'b00 ? {20'b0, w_inst[31:20]}:
+    31'b0;
 endmodule
 
 module m_ex(
     input wire w_clk,
     input wire [31:0] w_pc,
     output wire [31:0] w_next_pc,
-    output wire [11:0] w_imm,
+    output wire [31:0] w_imm,
     output wire [31:0] w_rs1_val,
     output wire [31:0] w_rs2_val,
     output wire [31:0] w_alu_res,
@@ -34,7 +45,9 @@ module m_ex(
   // wire[31:0] w_rs1_val, w_rs2_val, w_alu_res;
   m_RF rf(w_clk, w_inst[19:15], w_inst[24:20], 1'b1, w_inst[11:7], w_alu_res, w_rs1_val, w_rs2_val);
   // wire[11:0] w_imm;
-  m_imm_gen imm_gen(w_clk, w_inst, w_imm);
+  wire [1:0] imm_src;
+  main_decoder dec(w_inst[6:0], imm_src);
+  m_imm_gen imm_gen(w_clk, w_inst, imm_src, w_imm);
   assign w_alu_res = (w_pc == 0 || w_pc == 4) ? w_rs1_val + w_imm : w_rs1_val + w_rs2_val;
 
   assign w_next_pc = w_pc + 4;
@@ -45,7 +58,7 @@ module m_top();
   reg [31:0] r_pc = 0;
   wire [31:0] w_next_pc;
   wire[31:0] w_inst, w_rs1_val, w_rs2_val, w_alu_res;
-  wire[11:0] w_imm;
+  wire[31:0] w_imm;
   m_ex ex(r_clk, r_pc, w_next_pc, w_imm, w_rs1_val, w_rs2_val, w_alu_res, w_inst);
   reg is_pc_updated = 1;
   always @(posedge r_clk) begin
