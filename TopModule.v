@@ -26,7 +26,7 @@ module TopModule(
     wire [31:0] inst_out, w_next_pc;
     wire[31:0] w_inst, w_rs1_val, w_rs2_val, w_alu_res;
     wire[11:0] w_imm;
-    m_ex ex(r_clk, r_pc, w_next_pc, w_imm, w_rs1_val, w_rs2_val, w_alu_res, w_inst);
+    m_ex ex(c2, r_pc, w_next_pc, w_imm, w_rs1_val, w_rs2_val, w_alu_res, w_inst);
     reg is_pc_updated = 1;
     always @(posedge c2) begin
         is_pc_updated = ~is_pc_updated;
