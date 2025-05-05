@@ -26,10 +26,9 @@ module m_ex(
     output wire [11:0] w_imm,
     output wire [31:0] w_rs1_val,
     output wire [31:0] w_rs2_val,
-    output wire [31:0] w_alu_res
+    output wire [31:0] w_alu_res,
+    output wire [31:0] w_inst
   );
-
-  wire [31:0] w_inst;
 
   imem mem(w_pc[7:2], w_clk, w_inst);
   // wire[31:0] w_rs1_val, w_rs2_val, w_alu_res;
@@ -45,9 +44,9 @@ module m_top();
   reg r_clk=0; initial #150 forever #50 r_clk = ~r_clk;
   reg [31:0] r_pc = 0;
   wire [31:0] w_next_pc;
-  wire[31:0] w_rs1_val, w_rs2_val, w_alu_res;
+  wire[31:0] w_inst, w_rs1_val, w_rs2_val, w_alu_res;
   wire[11:0] w_imm;
-  m_ex ex(r_clk, r_pc, w_next_pc, w_imm, w_rs1_val, w_rs2_val, w_alu_res);
+  m_ex ex(r_clk, r_pc, w_next_pc, w_imm, w_rs1_val, w_rs2_val, w_alu_res, w_inst);
   reg is_pc_updated = 1;
   always @(posedge r_clk) begin
     is_pc_updated = ~is_pc_updated;
