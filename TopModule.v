@@ -53,7 +53,7 @@ module TopModule(
     assign HEX4 = result_dec;
 
     wire [7:0] second_operand_dec;
-    m_seven_segment seg5(second_operand[3:0], second_operand_dec);
+    m_seven_segment seg6(second_operand[3:0], second_operand_dec);
     assign HEX5 = second_operand_dec;
 
 endmodule
