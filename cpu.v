@@ -51,7 +51,9 @@ module main_decoder(input wire [6:0] opcode,
   output wire [1:0] result_src,
   output wire is_reg_write,
   output wire is_branch_if_zero,
-  output wire is_jmp);
+  output wire is_branch_if_nonzero,
+  output wire is_jmp,
+  output wire [2:0] alu_control);
   assign imm_src =
     (opcode == 7'b0010011 | opcode == 7'b0000011) ? 2'b00 :
     (opcode == 7'b0100011) ? 2'b01 :
@@ -64,7 +66,11 @@ module main_decoder(input wire [6:0] opcode,
                       0;
   assign is_reg_write = (opcode == 7'b0000011) | (opcode == 7'b0110011) | (opcode == 7'b0010011) | (opcode == 7'b1101111);
   assign is_branch_if_zero = (opcode == 7'b1100011 & funct3 == 3'b000);
+  assign is_branch_if_nonzero = (opcode == 7'b1100011 & funct3 == 3'b001);
   assign is_jmp = (opcode == 7'b1101111);
+  assign alu_control = (opcode == 7'b0000011 | opcode == 7'b0100011) ? 3'b000 : // load and store
+                         (opcode == 7'b1100011) ? 3'b001 :
+                         3'b000; // add
 endmodule
 
 module m_imm_gen(input wire w_clk,
@@ -93,8 +99,9 @@ module m_is_next_pc_jmp_br(
   assign is_jmp_or_br = (is_jmp) | (is_branch_if_zero & is_alu_out_zero);
 endmodule
 
-module m_alu(input wire[31:0] rs1_val, input wire[31:0] second_operand, output wire[31:0] alu_out);
-  assign alu_out = rs1_val + second_operand;
+module m_alu(input wire[31:0] rs1_val, input wire[31:0] second_operand, input wire [2:0] alu_control, output wire[31:0] alu_out);
+  assign alu_out = (alu_control == 3'b001) ? rs1_val - second_operand :
+                   rs1_val + second_operand;
 endmodule
 
 module m_ex(
@@ -118,13 +125,15 @@ module m_ex(
   wire is_mem_write;
   wire [1:0] result_src;
   wire is_branch_if_zero;
+  wire is_branch_if_nonzero;
+  wire [2:0] alu_control;
   wire is_jmp;
-  main_decoder dec(w_inst[6:0], w_inst[14:12], imm_src, alu_src, is_mem_write, result_src, is_reg_write, is_branch_if_zero, is_jmp);
+  main_decoder dec(w_inst[6:0], w_inst[14:12], imm_src, alu_src, is_mem_write, result_src, is_reg_write, is_branch_if_zero, is_branch_if_nonzero, is_jmp, alu_control);
   m_imm_gen imm_gen(w_clk, w_inst, imm_src, w_imm);
   
   m_mux second_operand_chooser(w_rs2_val, w_imm, alu_src, second_operand);
   // wire is_alu_out_zero;
-  m_alu alu(w_rs1_val, second_operand, w_alu_res);
+  m_alu alu(w_rs1_val, second_operand, alu_control, w_alu_res);
   wire [31:0] pc_br_or_jmp;
   m_adder br_or_jmp(w_pc, w_imm, pc_br_or_jmp);
   wire is_pc_jmp_or_br;
@@ -169,6 +178,7 @@ module m_top();
     $display("imm_src:        %2b", ex.imm_src);
     $display("imm:            %5d", $signed(ex.w_imm));
     $display("second_operand: %5d", ex.second_operand);
+    $display("alu_control:    %3b", ex.alu_control);
     $display("alu_res:        %5d", ex.w_alu_res);
     $display("result_src:     %2b", ex.result_src);
     $display("result:         %5d", ex.w_result);

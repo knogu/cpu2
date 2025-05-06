@@ -33,20 +33,6 @@ assertions0 = [
     {"pc": 4, "imm": 2, "second_operand": 2, "alu_res": 2},
 ]
 
-insts1 = [
-    "`MM[0]=32'b00000000010100000000000010010011;   // L: addi x1, x0, 5",
-    "`MM[1]={~7'd0,5'd2,5'd1,3'h0,5'h1d,7'h63};   // beq x1, x2, L",
-    "`MM[2]=32'b00000000000000000000000000110011;   // add x0, x0, x0",
-]
-
-assertions1 = [
-    {"pc": 0},
-    {"pc": 0, "second_operand": 5, "result": 5},
-    {"pc": 4},
-    {"pc": 4, "is_pc_jmp_or_br": 0, "next_pc": 8},
-    {"pc": 8}
-]
-
 insts2 = [
     "`MM[0]={12'd7,5'd0,3'd0,5'd1,7'h13};     // addi x1,x0,7",
     "`MM[1]={7'd0,5'd1,5'd0,3'h2,5'd8,7'h23}; // sw x1, 8(x0)",
@@ -64,20 +50,6 @@ assertions2 = [
 ]
 
 insts3 = [
-    "`MM[0]=32'b00000000000000000000000010010011;   // L: addi x1, x0, 0",
-    "`MM[1]={~7'd0,5'd2,5'd1,3'h0,5'h1d,7'h63};     // beq x1, x0, L",
-    "`MM[2]=32'b00000000000000000000000000110011;   // add x0, x0, x0",
-]
-
-assertions3 = [
-    {"pc": 0},
-    {"pc": 0, "imm": 0, "second_operand": 0, "result": 0},
-    {"pc": 4},
-    {"pc": 4, "is_pc_jmp_or_br": 1, "next_pc": 0},
-    {"pc": 0}
-]
-
-insts3 = [
     "`MM[0]={1'b0,10'b0000000100,1'b0,8'b00000000,5'd1,7'b1101111};     // jal 8",
     "`MM[1]={12'd7,5'd0,3'd0,5'd1,7'h13};     // addi x1,x0,7",
     "`MM[2]={12'd7,5'd0,3'd0,5'd1,7'h13};     // addi x1,x0,7",
@@ -87,6 +59,40 @@ assertions3 = [
     {"pc": 0},
     {"pc": 0, "result_src": 10, "result": 4},
     {"pc": 8, "x1": 4}
+]
+
+insts4 = [
+    "`MM[0]=32'b00000000010100000000000010010011;   // addi x1, x0, 5",
+    "`MM[1]=32'b00000000000100000000000100010011;   // L: addi x2, x0, 1",
+    "`MM[2]={~7'd0,5'd2,5'd1,3'h0,5'h1d,7'h63};     // beq x1, x2, L", # not eq. so expected not to branch
+    "`MM[3]=32'b00000000000000000000000000110011;   // add x0, x0, x0",
+]
+
+assertions4 = [
+    {"pc": 0},
+    {"pc": 0, "second_operand": 5, "result": 5},
+    {"pc": 4, "x1": 5},
+    {"pc": 4, "second_operand": 1, "result": 1},
+    {"pc": 8, "x2": 1},
+    {"pc": 8, "imm": -4, "next_pc": 12},
+    {"pc": 12}
+]
+
+insts5 = [
+    "`MM[0]=32'b00000000010100000000000010010011;   // addi x1, x0, 5",
+    "`MM[1]=32'b00000000010100000000000100010011;   // L: addi x2, x0, 5",
+    "`MM[2]={~7'd0,5'd2,5'd1,3'h0,5'h1d,7'h63};     // beq x1, x2, L", # eq. so expected to branch
+    "`MM[3]=32'b00000000000000000000000000110011;   // add x0, x0, x0",
+]
+
+assertions5 = [
+    {"pc": 0},
+    {"pc": 0, "second_operand": 5, "result": 5},
+    {"pc": 4, "x1": 5},
+    {"pc": 4, "rd": 2, "second_operand": 5, "result": 5},
+    {"pc": 8, "x2": 5},
+    {"pc": 8, "imm": -4, "next_pc": 4},
+    {"pc": 4}
 ]
 
 # insts4 = [
@@ -126,7 +132,7 @@ assertions3 = [
 #     {"pc": 8, "x1": 4294963204},
 # ]
 
-scenarios = [(insts0, assertions0), (insts1, assertions1), (insts2, assertions2), (insts3, assertions3)]
+scenarios = [(insts0, assertions0), (insts2, assertions2), (insts3, assertions3), (insts4, assertions4), (insts5, assertions5)]
 
 for ith, (insts, assertions) in enumerate(scenarios, start=0):
     for j, inst in enumerate(insts):
