@@ -68,13 +68,15 @@ module main_decoder(input wire [6:0] opcode,
   assign is_i = ~(is_j | is_b | is_s | is_r | is_u);
   assign is_jalr = (opcode == 7'b1100111);
   assign is_lui = (opcode == 7'b0110111);
+  assign is_auipc = (opcode == 7'b0010111);
   
   assign second_operand_src = is_i | is_s | is_jalr | is_lui;
   assign result_src = (opcode == 7'b0000011) ? 2'b01 :
                       (opcode == 7'b1101111) ? 2'b10 :
+                      is_auipc ? 2'b11 :
                       0;
   assign is_reg_write = (opcode == 7'b0000011) | (opcode == 7'b0110011) | (opcode == 7'b0010011) | (opcode == 7'b1101111) |
-                        is_lui;
+                        is_lui | is_auipc ;
   assign is_branch_if_zero = (is_b & funct3 == 3'b000);
   assign is_branch_if_nonzero = (is_b & funct3 == 3'b001);
   assign is_jmp = (opcode == 7'b1101111);
@@ -154,8 +156,8 @@ module m_ex(
   m_mux second_operand_chooser(w_rs2_val, w_imm, alu_src, second_operand);
   // wire is_alu_out_zero;
   m_alu alu(w_rs1_val, second_operand, alu_control, w_alu_res);
-  wire [31:0] pc_br_or_jmp;
-  m_adder br_or_jmp(w_pc, w_imm, pc_br_or_jmp);
+  wire [31:0] pc_plus_imm;
+  m_adder br_or_jmp(w_pc, w_imm, pc_plus_imm);
   wire is_pc_jmp_or_br;
   m_is_next_pc_jmp_br m(is_branch_if_zero, is_branch_if_nonzero, (w_alu_res == 0), is_jmp, is_pc_jmp_or_br);
 
@@ -163,10 +165,10 @@ module m_ex(
   m_mem mem(w_clk, w_alu_res, is_s, w_rs2_val, w_mem_out);
 
   // Write Back
-  m_mux_2bit result_chooser(w_alu_res, w_mem_out, w_pc+4, 32'b0, result_src, w_result);
+  m_mux_2bit result_chooser(w_alu_res, w_mem_out, w_pc+4, pc_plus_imm, result_src, w_result);
 
   assign w_next_pc = is_jalr ? {w_alu_res[31:1], 1'b0} :
-                     is_pc_jmp_or_br ? pc_br_or_jmp :
+                     is_pc_jmp_or_br ? pc_plus_imm :
                      w_pc + 4;
 endmodule
 
