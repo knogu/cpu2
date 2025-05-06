@@ -166,26 +166,54 @@ assertions10 = [
     {"pc": 4, "x1": 4294963204},
 ]
 
-# insts4 = [
-#     "`MM[0]={12'd7,5'd0,3'd0,5'd1,7'h13};     // addi x1, x0, 7",
-#     "`MM[1]={7'd0,5'd0,5'd1,3'b110,5'b00010,7'b0110011}; // or   x2, x1, x0",
-#     "`MM[2]={7'd0,5'd0,5'd1,3'b111,5'b00010,7'b0110011}; // and  x2, x1, x0",
-#     "`MM[3]={12'b000000000111, 5'b00001, 3'b111, 5'b00010, 7'b0010011}; // andi  x2, x1, 7",
-#     "`MM[4]={12'b000000000111, 5'b00001, 3'b110, 5'b00010, 7'b0010011}; // ori  x2, x0, 7",
-# ]
+insts11 = [
+    "`MM[0]={12'd7,5'd0,3'd0,5'd1,7'h13};     // addi x1, x0, 7",
+    "`MM[1]={7'd0,5'd0,5'd1,3'b110,5'b00010,7'b0110011}; // or   x2, x1, x0",
+    "`MM[2]={7'd0,5'd0,5'd1,3'b111,5'b00010,7'b0110011}; // and  x2, x1, x0",
+]
 
-# assertions4 = [
-#     {"pc": 0},
-#     {"pc": 4, "x1": 7},
-#     {"pc": 8, "x2": 7, "x1": 7},
-#     {"pc": 12, "x2": 0},
-#     {"pc": 16, "x2": 7},
-#     {"pc": 20, "x2": 7},
-# ]
+assertions11 = [
+    {"pc": 0},
+    {"pc": 0, "result": 7},
+    {"pc": 4, "x1": 7},
+    {"pc": 4, "x1": 7, "result": 7},
+    {"pc": 8},
+    {"pc": 8, "result": 0},
+]
+
+insts12 = [
+    "`MM[0]={12'd7,5'd0,3'd0,5'd1,7'h13};     // addi x1, x0, 7",
+    "`MM[1]={12'b000000000111, 5'b00001, 3'b111, 5'b00010, 7'b0010011}; // andi  x2, x1, 7",
+    "`MM[2]={12'b000000000111, 5'b00001, 3'b110, 5'b00010, 7'b0010011}; // ori  x2, x0, 7",
+]
+
+assertions12 = [
+    {"pc": 0},
+    {"pc": 0, "result": 7},
+    {"pc": 4, "x1": 7},
+    {"pc": 4, "x1": 7, "result": 7},
+    {"pc": 8},
+    {"pc": 8, "result": 7},
+]
+
+insts13 = [
+    "`MM[0]={12'd7,5'd0,3'b010,5'd1,7'b0010011};     // slti x1, x0, 7",
+    "`MM[1]={7'd0,5'd1,5'd0,3'b010,5'b00010,7'b0110011};     // slt  x2, x0, x1",
+    "`MM[2]={7'd0,5'd0,5'd1,3'b010,5'b00010,7'b0110011};     // slt  x2, x1, x0",
+]
+
+assertions13 = [
+    {"pc": 0},
+    {"pc": 0, "result": 1},
+    {"pc": 4, "x1": 1},
+    {"pc": 4, "rs1_val": 0, "second_operand": 1, "result": 1 },
+    {"pc": 8},
+    {"pc": 8, "result": 0},
+]
 
 
 scenarios = [(insts0, assertions0), (insts2, assertions2), (insts3, assertions3), (insts4, assertions4), (insts5, assertions5), (insts6, assertions6), (insts7, assertions7),
-             (insts8, assertions8), (insts9, assertions9), (insts10, assertions10)]
+             (insts8, assertions8), (insts9, assertions9), (insts10, assertions10), (insts11, assertions11), (insts12, assertions12), (insts13, assertions13)]
 
 for ith, (insts, assertions) in enumerate(scenarios, start=0):
     for j, inst in enumerate(insts):

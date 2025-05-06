@@ -44,6 +44,7 @@ module m_mux_2bit(w_in1, w_in2, w_in3, w_in4, w_sel, w_out);
 endmodule
 
 module main_decoder(input wire [6:0] opcode,
+  input  wire [6:0] funct7,
   input  wire [2:0] funct3,
   output wire second_operand_src,
   output wire [1:0] result_src,
@@ -83,6 +84,10 @@ module main_decoder(input wire [6:0] opcode,
   assign alu_control = (opcode == 7'b0000011 | opcode == 7'b0100011) ? 3'b000 : // load and store
                        (opcode == 7'b1100011) ? 3'b001 :
                        is_lui ? 3'b100 :
+                       ((is_r | is_i) & funct3 == 3'b111) ? 3'b010 : // and
+                       ((is_r | is_i) & funct3 == 3'b110) ? 3'b011 : // or
+                       ((is_r | is_i) & funct3 == 3'b010) ? 3'b101 : // slt 
+                       ((is_r | is_i) & funct3 == 3'b000 & funct7 == 7'b0100000) ? 3'b001 : // sub
                        3'b000; // add
   
 endmodule
@@ -123,7 +128,10 @@ endmodule
 
 module m_alu(input wire[31:0] rs1_val, input wire[31:0] second_operand, input wire [2:0] alu_control, output wire[31:0] alu_out);
   assign alu_out = (alu_control == 3'b001) ? rs1_val - second_operand :
+                   (alu_control == 3'b010) ? rs1_val & second_operand :
+                   (alu_control == 3'b011) ? rs1_val | second_operand :
                    (alu_control == 3'b100) ? second_operand :
+                   (alu_control == 3'b101) ? (rs1_val < second_operand) :
                    rs1_val + second_operand;
 endmodule
 
@@ -150,7 +158,7 @@ module m_ex(
   wire [2:0] alu_control;
   wire is_jmp;
   wire is_j, is_b, is_s, is_r, is_u, is_i, is_jalr;
-  main_decoder dec(w_inst[6:0], w_inst[14:12], alu_src, result_src, is_reg_write, is_branch_if_zero, is_branch_if_nonzero, is_jmp, alu_control, is_j, is_b, is_s, is_r, is_u, is_i, is_jalr);
+  main_decoder dec(w_inst[6:0], w_inst[31:25], w_inst[14:12], alu_src, result_src, is_reg_write, is_branch_if_zero, is_branch_if_nonzero, is_jmp, alu_control, is_j, is_b, is_s, is_r, is_u, is_i, is_jalr);
   m_imm_gen imm_gen(w_clk, w_inst, is_j, is_b, is_s, is_r, is_u, is_i, w_imm);
   
   m_mux second_operand_chooser(w_rs2_val, w_imm, alu_src, second_operand);
