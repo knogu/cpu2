@@ -67,18 +67,21 @@ module main_decoder(input wire [6:0] opcode,
   assign is_u = (opcode[6:2] == 5'b01101 || opcode[6:2] ==5'b00101);
   assign is_i = ~(is_j | is_b | is_s | is_r | is_u);
   assign is_jalr = (opcode == 7'b1100111);
+  assign is_lui = (opcode == 7'b0110111);
   
-  assign second_operand_src = is_i | is_s | is_jalr;
+  assign second_operand_src = is_i | is_s | is_jalr | is_lui;
   assign result_src = (opcode == 7'b0000011) ? 2'b01 :
                       (opcode == 7'b1101111) ? 2'b10 :
                       0;
-  assign is_reg_write = (opcode == 7'b0000011) | (opcode == 7'b0110011) | (opcode == 7'b0010011) | (opcode == 7'b1101111);
+  assign is_reg_write = (opcode == 7'b0000011) | (opcode == 7'b0110011) | (opcode == 7'b0010011) | (opcode == 7'b1101111) |
+                        is_lui;
   assign is_branch_if_zero = (is_b & funct3 == 3'b000);
   assign is_branch_if_nonzero = (is_b & funct3 == 3'b001);
   assign is_jmp = (opcode == 7'b1101111);
   assign alu_control = (opcode == 7'b0000011 | opcode == 7'b0100011) ? 3'b000 : // load and store
-                         (opcode == 7'b1100011) ? 3'b001 :
-                         3'b000; // add
+                       (opcode == 7'b1100011) ? 3'b001 :
+                       is_lui ? 3'b100 :
+                       3'b000; // add
   
 endmodule
 
@@ -118,6 +121,7 @@ endmodule
 
 module m_alu(input wire[31:0] rs1_val, input wire[31:0] second_operand, input wire [2:0] alu_control, output wire[31:0] alu_out);
   assign alu_out = (alu_control == 3'b001) ? rs1_val - second_operand :
+                   (alu_control == 3'b100) ? second_operand :
                    rs1_val + second_operand;
 endmodule
 
@@ -196,6 +200,7 @@ module m_top();
     $display("rs2:            %5d", ex.w_inst[24:20]);
     $display("rs2_val:        %5d", ex.w_rs2_val);
     $display("imm:            %5d", $signed(ex.w_imm));
+    $display("imm_u:          %5d", ex.w_imm);
     $display("second_operand: %5d", ex.second_operand);
     $display("alu_control:    %3b", ex.alu_control);
     $display("alu_res:        %5d", ex.w_alu_res);
@@ -206,7 +211,7 @@ module m_top();
     $display("x3:             %5d", ex.rf.mem[3]);
     $display("write reg:      %5d", ex.rf.w_write_addr);
     $display("write data:     %5d", ex.rf.w_write_data);
-    $display("write enabled:  %5d", ex.rf.w_write_enabled);
+    $display("is_reg_write:  %5d", ex.rf.w_write_enabled);
     $display("======================");
   end
   initial begin
