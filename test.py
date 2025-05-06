@@ -129,6 +129,21 @@ assertions7 = [
     {"pc": 12}
 ]
 
+insts8 = [
+    "`MM[0]=32'b00000000100000000000000010010011;   // addi x1, x0, 8",
+    "`MM[1]={12'd4, 5'b1, 3'b0, 5'd2, 7'b1100111};   // jalr x2, 4(x1)",
+    "`MM[2]=32'b00000000000000000000000000110011;   // add x0, x0, x0", # should be skipped by jalr
+    "`MM[3]=32'b00000000010100000000000010010011;   // addi x1, x0, 5",
+]
+
+assertions8 = [
+    {"pc":0},
+    {"pc":0},
+    {"pc":4},
+    {"pc":4, "is_i": 1, "imm": 4, "alu_res": 12, "next_pc": 12},
+    {"pc":12},
+]
+
 # insts4 = [
 #     "`MM[0]={12'd7,5'd0,3'd0,5'd1,7'h13};     // addi x1, x0, 7",
 #     "`MM[1]={7'd0,5'd0,5'd1,3'b110,5'b00010,7'b0110011}; // or   x2, x1, x0",
@@ -166,7 +181,8 @@ assertions7 = [
 #     {"pc": 8, "x1": 4294963204},
 # ]
 
-scenarios = [(insts0, assertions0), (insts2, assertions2), (insts3, assertions3), (insts4, assertions4), (insts5, assertions5), (insts6, assertions6), (insts7, assertions7)]
+scenarios = [(insts0, assertions0), (insts2, assertions2), (insts3, assertions3), (insts4, assertions4), (insts5, assertions5), (insts6, assertions6), (insts7, assertions7),
+             (insts8, assertions8)]
 
 for ith, (insts, assertions) in enumerate(scenarios, start=0):
     for j, inst in enumerate(insts):

@@ -57,7 +57,8 @@ module main_decoder(input wire [6:0] opcode,
   output wire is_s,
   output wire is_r,
   output wire is_u,
-  output wire is_i);
+  output wire is_i,
+  output wire is_jalr);
 
   assign is_j = (opcode[6:2] == 5'b11011);
   assign is_b = (opcode[6:2] == 5'b11000);
@@ -65,8 +66,9 @@ module main_decoder(input wire [6:0] opcode,
   assign is_r = (opcode[6:2] == 5'b01100);
   assign is_u = (opcode[6:2] == 5'b01101 || opcode[6:2] ==5'b00101);
   assign is_i = ~(is_j | is_b | is_s | is_r | is_u);
+  assign is_jalr = (opcode == 7'b1100111);
   
-  assign second_operand_src = is_i | is_s;
+  assign second_operand_src = is_i | is_s | is_jalr;
   assign result_src = (opcode == 7'b0000011) ? 2'b01 :
                       (opcode == 7'b1101111) ? 2'b10 :
                       0;
@@ -141,8 +143,8 @@ module m_ex(
   wire is_branch_if_nonzero;
   wire [2:0] alu_control;
   wire is_jmp;
-  wire is_j,is_b,is_s,is_r,is_u,is_i;
-  main_decoder dec(w_inst[6:0], w_inst[14:12], alu_src, result_src, is_reg_write, is_branch_if_zero, is_branch_if_nonzero, is_jmp, alu_control, is_j, is_b, is_s, is_r, is_u, is_i);
+  wire is_j, is_b, is_s, is_r, is_u, is_i, is_jalr;
+  main_decoder dec(w_inst[6:0], w_inst[14:12], alu_src, result_src, is_reg_write, is_branch_if_zero, is_branch_if_nonzero, is_jmp, alu_control, is_j, is_b, is_s, is_r, is_u, is_i, is_jalr);
   m_imm_gen imm_gen(w_clk, w_inst, is_j, is_b, is_s, is_r, is_u, is_i, w_imm);
   
   m_mux second_operand_chooser(w_rs2_val, w_imm, alu_src, second_operand);
@@ -159,7 +161,9 @@ module m_ex(
   // Write Back
   m_mux_2bit result_chooser(w_alu_res, w_mem_out, w_pc+4, 32'b0, result_src, w_result);
 
-  assign w_next_pc = is_pc_jmp_or_br ? pc_br_or_jmp : w_pc + 4;
+  assign w_next_pc = is_jalr ? {w_alu_res[31:1], 1'b0} :
+                     is_pc_jmp_or_br ? pc_br_or_jmp :
+                     w_pc + 4;
 endmodule
 
 module m_top();
