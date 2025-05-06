@@ -33,21 +33,19 @@ assertions0 = [
     {"pc": 4, "imm": 2, "second_operand": 2, "alu_res": 2},
 ]
 
-# insts1 = [
-#     "`MM[0]={12'd5,5'd0,3'h0,5'd1,7'h13};       //  addi x1,x0,5",
-#     "`MM[1]={7'd0,5'd1,5'd1,3'h0,5'd2,7'h33};   //  add  x2,x1,x1",
-#     "`MM[2]={12'd1,5'd1,3'd0,5'd1,7'h13};       //L:addi x1,x1,1",
-#     "`MM[3]={~7'd0,5'd2,5'd1,3'h0,5'h1d,7'h63}; //  beq  x1,x2,L",
-#     "`MM[4]={12'd9,5'd1,3'd0,5'd10,7'h13};      //  addi x10,x1,9"
-# ]
+insts1 = [
+    "`MM[0]=32'b00000000010100000000000010010011;   // L: addi x1, x0, 5",
+    "`MM[1]={~7'd0,5'd2,5'd1,3'h0,5'h1d,7'h63};   // beq x1, x2, L",
+    "`MM[2]=32'b00000000000000000000000000110011;   // add x0, x0, x0",
+]
 
-# assertions1 = [
-#     {"pc": 0, "rs1_val": 0, "imm": 5, "2nd_operand": 5, "wbdata": 5, "rd": 1},
-#     {"pc": 4, "rs1_val": 5, "rs2_val": 5, "2nd_operand": 5, "wbdata": 10, "rd": 2},
-#     {"pc": 8, "rs1_val": 5, "imm": 1, "2nd_operand": 1, "wbdata": 6, "rd": 1},
-#     {"pc": 12, "rs1_val": 6, "2nd_operand": 10},
-#     {"pc": 16}
-# ]
+assertions1 = [
+    {"pc": 0},
+    {"pc": 0, "second_operand": 5, "result": 5},
+    {"pc": 4},
+    {"pc": 4, "is_pc_jmp_or_br": 0, "next_pc": 8},
+    {"pc": 8}
+]
 
 insts2 = [
     "`MM[0]={12'd7,5'd0,3'd0,5'd1,7'h13};     // addi x1,x0,7",
@@ -63,6 +61,20 @@ assertions2 = [
     {"pc": 8},
     {"pc": 8, "rd": 2, "imm": 8, "second_operand": 8, "rs1": 0, "alu_res": 8, "result": 7},
     {"pc": 12, "x2": 7}
+]
+
+insts3 = [
+    "`MM[0]=32'b00000000000000000000000010010011;   // L: addi x1, x0, 0",
+    "`MM[1]={~7'd0,5'd2,5'd1,3'h0,5'h1d,7'h63};     // beq x1, x0, L",
+    "`MM[2]=32'b00000000000000000000000000110011;   // add x0, x0, x0",
+]
+
+assertions3 = [
+    {"pc": 0},
+    {"pc": 0, "imm": 0, "second_operand": 0, "result": 0},
+    {"pc": 4},
+    {"pc": 4, "is_pc_jmp_or_br": 1, "next_pc": 0},
+    {"pc": 0}
 ]
 
 # insts3 = [
@@ -113,7 +125,7 @@ assertions2 = [
 #     {"pc": 8, "x1": 4294963204},
 # ]
 
-scenarios = [(insts0, assertions0), (insts2, assertions2)]
+scenarios = [(insts0, assertions0), (insts1, assertions1), (insts2, assertions2)]
 
 for ith, (insts, assertions) in enumerate(scenarios, start=0):
     for j, inst in enumerate(insts):

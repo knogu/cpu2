@@ -34,11 +34,13 @@ module m_mux(w_in1, w_in2, w_sel, w_out);
 endmodule
 
 module main_decoder(input wire [6:0] opcode,
+  input  wire [2:0] funct3,
   output wire [1:0] imm_src,
   output wire second_operand_src,
   output wire is_mem_write,
   output wire is_result_from_mem,
-  output wire is_reg_write);
+  output wire is_reg_write,
+  output wire is_branch_if_zero);
   assign imm_src =
     (opcode == 7'b0010011 | opcode == 7'b0000011) ? 2'b00 :
     (opcode == 7'b0100011) ? 2'b01 :
@@ -48,6 +50,7 @@ module main_decoder(input wire [6:0] opcode,
   assign is_mem_write = (opcode == 7'b0100011);
   assign is_result_from_mem = (opcode == 7'b0000011);
   assign is_reg_write = (opcode == 7'b0000011) | (opcode == 7'b0110011) | (opcode == 7'b0010011);
+  assign is_branch_if_zero = (opcode == 7'b1100011 & funct3 == 3'b000);
 endmodule
 
 module m_imm_gen(input wire w_clk,
@@ -58,7 +61,20 @@ module m_imm_gen(input wire w_clk,
   assign w_imm =
     (imm_src == 2'b00) ? {20'b0, w_inst[31:20]}:
     (imm_src == 2'b01) ? { {20{w_inst[31]}}, w_inst[31:25], w_inst[11:7] }:
+    (imm_src == 2'b10) ? { {20{w_inst[31]}}, w_inst[7], w_inst[30:25], w_inst[11:8], 1'b0}:
     31'b0;
+endmodule
+
+module m_adder(input wire [31:0] w_in1, input wire [31:0] w_in2, output wire [31:0] w_out);
+  assign w_out = w_in1 + w_in2;
+endmodule
+
+module m_is_next_pc_jmp_br(
+  input wire is_branch_if_zero,
+  input wire is_alu_out_zero,
+  output wire is_jmp_or_br
+);
+  assign is_jmp_or_br = (is_branch_if_zero & is_alu_out_zero);
 endmodule
 
 module m_alu(input wire[31:0] rs1_val, input wire[31:0] second_operand, output wire[31:0] alu_out);
@@ -85,11 +101,17 @@ module m_ex(
   wire alu_src;
   wire is_mem_write;
   wire is_result_from_mem;
-  main_decoder dec(w_inst[6:0], imm_src, alu_src, is_mem_write, is_result_from_mem, is_reg_write);
+  wire is_branch_if_zero;
+  main_decoder dec(w_inst[6:0], w_inst[14:12], imm_src, alu_src, is_mem_write, is_result_from_mem, is_reg_write, is_branch_if_zero);
   m_imm_gen imm_gen(w_clk, w_inst, imm_src, w_imm);
   
   m_mux second_operand_chooser(w_rs2_val, w_imm, alu_src, second_operand);
+  // wire is_alu_out_zero;
   m_alu alu(w_rs1_val, second_operand, w_alu_res);
+  wire [31:0] pc_br_or_jmp;
+  m_adder br_or_jmp(w_pc, w_imm, pc_br_or_jmp);
+  wire is_pc_jmp_or_br;
+  m_is_next_pc_jmp_br m(is_branch_if_zero, (w_alu_res == 0), is_pc_jmp_or_br);
 
   // Memory Access
   m_mem mem(w_clk, w_alu_res, is_mem_write, w_rs2_val, w_mem_out);
@@ -97,7 +119,7 @@ module m_ex(
   // Write Back
   m_mux result_chooser(w_alu_res, w_mem_out, is_result_from_mem, w_result);
 
-  assign w_next_pc = w_pc + 4;
+  assign w_next_pc = is_pc_jmp_or_br ? pc_br_or_jmp : w_pc + 4;
 endmodule
 
 module m_top();
@@ -119,6 +141,7 @@ module m_top();
     $display("pc:          %5d", r_pc);
     $display("inst:        %b ", ex.w_inst);
     $display("next_pc:        %5d", w_next_pc);
+    $display("is_pc_jmp_or_br: %b", ex.is_pc_jmp_or_br);
     $display("pc updated:     %5d", is_pc_updated);
     $display("opecode:        %7b", ex.w_inst[6:0]);
     $display("rd:             %5d", ex.w_inst[11:7]);
@@ -127,7 +150,7 @@ module m_top();
     $display("rs2:            %5d", ex.w_inst[24:20]);
     $display("rs2_val:        %5d", ex.w_rs2_val);
     $display("imm_src:        %2b", ex.imm_src);
-    $display("imm:            %5d", ex.w_imm);
+    $display("imm:            %5d", $signed(ex.w_imm));
     $display("second_operand: %5d", ex.second_operand);
     $display("alu_res:        %5d", ex.w_alu_res);
     $display("result:         %5d", ex.w_result);
