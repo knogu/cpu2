@@ -95,14 +95,14 @@ assertions5 = [
     {"pc": 4}
 ]
 
-insts4 = [
+insts6 = [
     "`MM[0]=32'b00000000010100000000000010010011;   // addi x1, x0, 5",
     "`MM[1]=32'b00000000000100000000000100010011;   // L: addi x2, x0, 1",
     "`MM[2]={~7'd0,5'd2,5'd1,3'h1,5'h1d,7'h63};     // bne x1, x2, L", # not eq. so expected to branch
     "`MM[3]=32'b00000000000000000000000000110011;   // add x0, x0, x0",
 ]
 
-assertions4 = [
+assertions6 = [
     {"pc": 0},
     {"pc": 0, "second_operand": 5, "result": 5},
     {"pc": 4, "x1": 5},
@@ -110,6 +110,23 @@ assertions4 = [
     {"pc": 8, "x2": 1},
     {"pc": 8, "imm": -4, "next_pc": 4},
     {"pc": 4}
+]
+
+insts7 = [
+    "`MM[0]=32'b00000000010100000000000010010011;   // addi x1, x0, 5",
+    "`MM[1]=32'b00000000010100000000000100010011;   // L: addi x2, x0, 5",
+    "`MM[2]={~7'd0,5'd2,5'd1,3'h1,5'h1d,7'h63};     // bne x1, x2, L", # eq. so expected not to branch
+    "`MM[3]=32'b00000000000000000000000000110011;   // add x0, x0, x0",
+]
+
+assertions7 = [
+    {"pc": 0},
+    {"pc": 0, "second_operand": 5, "result": 5},
+    {"pc": 4, "x1": 5},
+    {"pc": 4, "rd": 2, "second_operand": 5, "result": 5},
+    {"pc": 8, "x2": 5},
+    {"pc": 8, "imm": -4, "next_pc": 12},
+    {"pc": 12}
 ]
 
 # insts4 = [
@@ -149,7 +166,7 @@ assertions4 = [
 #     {"pc": 8, "x1": 4294963204},
 # ]
 
-scenarios = [(insts0, assertions0), (insts2, assertions2), (insts3, assertions3), (insts4, assertions4), (insts5, assertions5)]
+scenarios = [(insts0, assertions0), (insts2, assertions2), (insts3, assertions3), (insts4, assertions4), (insts5, assertions5), (insts6, assertions6), (insts7, assertions7)]
 
 for ith, (insts, assertions) in enumerate(scenarios, start=0):
     for j, inst in enumerate(insts):

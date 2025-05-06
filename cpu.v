@@ -92,11 +92,14 @@ endmodule
 
 module m_is_next_pc_jmp_br(
   input wire is_branch_if_zero,
+  input wire is_branch_if_nonzero,
   input wire is_alu_out_zero,
   input wire is_jmp,
   output wire is_jmp_or_br
 );
-  assign is_jmp_or_br = (is_jmp) | (is_branch_if_zero & is_alu_out_zero);
+  assign is_jmp_or_br = (is_jmp) |
+                        (is_branch_if_zero & is_alu_out_zero) |
+                        (is_branch_if_nonzero & !is_alu_out_zero);
 endmodule
 
 module m_alu(input wire[31:0] rs1_val, input wire[31:0] second_operand, input wire [2:0] alu_control, output wire[31:0] alu_out);
@@ -137,7 +140,7 @@ module m_ex(
   wire [31:0] pc_br_or_jmp;
   m_adder br_or_jmp(w_pc, w_imm, pc_br_or_jmp);
   wire is_pc_jmp_or_br;
-  m_is_next_pc_jmp_br m(is_branch_if_zero, (w_alu_res == 0), is_jmp, is_pc_jmp_or_br);
+  m_is_next_pc_jmp_br m(is_branch_if_zero, is_branch_if_nonzero, (w_alu_res == 0), is_jmp, is_pc_jmp_or_br);
 
   // Memory Access
   m_mem mem(w_clk, w_alu_res, is_mem_write, w_rs2_val, w_mem_out);
