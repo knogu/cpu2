@@ -53,7 +53,13 @@ module main_decoder(input wire [6:0] opcode,
   output wire is_branch_if_zero,
   output wire is_branch_if_nonzero,
   output wire is_jmp,
-  output wire [2:0] alu_control);
+  output wire [2:0] alu_control,
+  output wire is_j,
+  output wire is_b,
+  output wire is_s,
+  output wire is_r,
+  output wire is_u,
+  output wire is_i);
   assign imm_src =
     (opcode == 7'b0010011 | opcode == 7'b0000011) ? 2'b00 :
     (opcode == 7'b0100011) ? 2'b01 :
@@ -71,19 +77,30 @@ module main_decoder(input wire [6:0] opcode,
   assign alu_control = (opcode == 7'b0000011 | opcode == 7'b0100011) ? 3'b000 : // load and store
                          (opcode == 7'b1100011) ? 3'b001 :
                          3'b000; // add
+  assign is_j = (opcode[6:2] == 5'b11011);
+  assign is_b = (opcode[6:2] == 5'b11000);
+  assign is_s = (opcode[6:2] == 5'b01000);
+  assign is_r = (opcode[6:2] == 5'b01100);
+  assign is_u = (opcode[6:2] == 5'b01101 || opcode[6:2] ==5'b00101);
+  assign is_i = ~(is_j | is_b | is_s | is_r | is_u);
 endmodule
 
 module m_imm_gen(input wire w_clk,
   input wire [31:0] w_inst,
-  input wire [1:0] imm_src,
+  input wire is_j,
+  input wire is_b,
+  input wire is_s,
+  input wire is_r,
+  input wire is_u,
+  input wire is_i,
   output wire [31:0] w_imm
 ); 
-  assign w_imm =
-    (imm_src == 2'b00) ? {20'b0, w_inst[31:20]}:
-    (imm_src == 2'b01) ? { {20{w_inst[31]}}, w_inst[31:25], w_inst[11:7] }:
-    (imm_src == 2'b10) ? { {20{w_inst[31]}}, w_inst[7], w_inst[30:25], w_inst[11:8], 1'b0}:
-    (imm_src == 2'b11) ? { {12{w_inst[31]}}, w_inst[19:12], w_inst[20], w_inst[30:21], 1'b0 } :
-    31'b0;
+  assign w_imm = (is_i) ? { {20{w_inst[31]}}, w_inst[31:20] } :
+                 (is_s) ? { {20{w_inst[31]}}, w_inst[31:25], w_inst[11:7] } :
+                 (is_b) ? { {20{w_inst[31]}}, w_inst[7], w_inst[30:25], w_inst[11:8], 1'b0} :
+                 (is_u) ? { w_inst[31:12], 12'b0 } :
+                 (is_j) ? { {12{w_inst[31]}}, w_inst[19:12], w_inst[20], w_inst[30:21], 1'b0 } :
+                 0;
 endmodule
 
 module m_adder(input wire [31:0] w_in1, input wire [31:0] w_in2, output wire [31:0] w_out);
@@ -131,8 +148,9 @@ module m_ex(
   wire is_branch_if_nonzero;
   wire [2:0] alu_control;
   wire is_jmp;
-  main_decoder dec(w_inst[6:0], w_inst[14:12], imm_src, alu_src, is_mem_write, result_src, is_reg_write, is_branch_if_zero, is_branch_if_nonzero, is_jmp, alu_control);
-  m_imm_gen imm_gen(w_clk, w_inst, imm_src, w_imm);
+  wire is_j,is_b,is_s,is_r,is_u,is_i;
+  main_decoder dec(w_inst[6:0], w_inst[14:12], imm_src, alu_src, is_mem_write, result_src, is_reg_write, is_branch_if_zero, is_branch_if_nonzero, is_jmp, alu_control, is_j, is_b, is_s, is_r, is_u, is_i);
+  m_imm_gen imm_gen(w_clk, w_inst, is_j, is_b, is_s, is_r, is_u, is_i, w_imm);
   
   m_mux second_operand_chooser(w_rs2_val, w_imm, alu_src, second_operand);
   // wire is_alu_out_zero;
@@ -173,6 +191,8 @@ module m_top();
     $display("is_pc_jmp_or_br: %b", ex.is_pc_jmp_or_br);
     $display("pc updated:     %5d", is_pc_updated);
     $display("opecode:        %7b", ex.w_inst[6:0]);
+    $display("is_i:           %b",  ex.is_i);
+    $display("is_s:           %b",  ex.is_s);
     $display("rd:             %5d", ex.w_inst[11:7]);
     $display("rs1:            %5d", ex.w_inst[19:15]);
     $display("rs1_val:        %5d", ex.w_rs1_val);
