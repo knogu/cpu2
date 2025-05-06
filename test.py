@@ -77,16 +77,17 @@ assertions3 = [
     {"pc": 0}
 ]
 
-# insts3 = [
-#     "`MM[0]={1'b0,10'b0000000100,1'b0,8'b00000000,5'd1,7'b1101111};     // jal 8",
-#     "`MM[1]={12'd7,5'd0,3'd0,5'd1,7'h13};     // addi x1,x0,7",
-#     "`MM[2]={12'd7,5'd0,3'd0,5'd1,7'h13};     // addi x1,x0,7",
-# ]
+insts3 = [
+    "`MM[0]={1'b0,10'b0000000100,1'b0,8'b00000000,5'd1,7'b1101111};     // jal 8",
+    "`MM[1]={12'd7,5'd0,3'd0,5'd1,7'h13};     // addi x1,x0,7",
+    "`MM[2]={12'd7,5'd0,3'd0,5'd1,7'h13};     // addi x1,x0,7",
+]
 
-# assertions3 = [
-#     {"pc": 0},
-#     {"pc": 8, "x1": 4},
-# ]
+assertions3 = [
+    {"pc": 0},
+    {"pc": 0, "result_src": 10, "result": 4},
+    {"pc": 8, "x1": 4}
+]
 
 # insts4 = [
 #     "`MM[0]={12'd7,5'd0,3'd0,5'd1,7'h13};     // addi x1, x0, 7",
@@ -125,7 +126,7 @@ assertions3 = [
 #     {"pc": 8, "x1": 4294963204},
 # ]
 
-scenarios = [(insts0, assertions0), (insts1, assertions1), (insts2, assertions2)]
+scenarios = [(insts0, assertions0), (insts1, assertions1), (insts2, assertions2), (insts3, assertions3)]
 
 for ith, (insts, assertions) in enumerate(scenarios, start=0):
     for j, inst in enumerate(insts):
