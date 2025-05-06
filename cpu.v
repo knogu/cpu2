@@ -45,9 +45,7 @@ endmodule
 
 module main_decoder(input wire [6:0] opcode,
   input  wire [2:0] funct3,
-  output wire [1:0] imm_src,
   output wire second_operand_src,
-  output wire is_mem_write,
   output wire [1:0] result_src,
   output wire is_reg_write,
   output wire is_branch_if_zero,
@@ -60,29 +58,26 @@ module main_decoder(input wire [6:0] opcode,
   output wire is_r,
   output wire is_u,
   output wire is_i);
-  assign imm_src =
-    (opcode == 7'b0010011 | opcode == 7'b0000011) ? 2'b00 :
-    (opcode == 7'b0100011) ? 2'b01 :
-    (opcode == 7'b1100011) ? 2'b10 :
-    2'b11;
-  assign second_operand_src = (opcode == 7'b0010011) | (opcode == 7'b0000011) | (opcode == 7'b0100011);
-  assign is_mem_write = (opcode == 7'b0100011);
-  assign result_src = (opcode == 7'b0000011) ? 2'b01 :
-                      (opcode == 7'b1101111) ? 2'b10 :
-                      0;
-  assign is_reg_write = (opcode == 7'b0000011) | (opcode == 7'b0110011) | (opcode == 7'b0010011) | (opcode == 7'b1101111);
-  assign is_branch_if_zero = (opcode == 7'b1100011 & funct3 == 3'b000);
-  assign is_branch_if_nonzero = (opcode == 7'b1100011 & funct3 == 3'b001);
-  assign is_jmp = (opcode == 7'b1101111);
-  assign alu_control = (opcode == 7'b0000011 | opcode == 7'b0100011) ? 3'b000 : // load and store
-                         (opcode == 7'b1100011) ? 3'b001 :
-                         3'b000; // add
+
   assign is_j = (opcode[6:2] == 5'b11011);
   assign is_b = (opcode[6:2] == 5'b11000);
   assign is_s = (opcode[6:2] == 5'b01000);
   assign is_r = (opcode[6:2] == 5'b01100);
   assign is_u = (opcode[6:2] == 5'b01101 || opcode[6:2] ==5'b00101);
   assign is_i = ~(is_j | is_b | is_s | is_r | is_u);
+  
+  assign second_operand_src = is_i | is_s;
+  assign result_src = (opcode == 7'b0000011) ? 2'b01 :
+                      (opcode == 7'b1101111) ? 2'b10 :
+                      0;
+  assign is_reg_write = (opcode == 7'b0000011) | (opcode == 7'b0110011) | (opcode == 7'b0010011) | (opcode == 7'b1101111);
+  assign is_branch_if_zero = (is_b & funct3 == 3'b000);
+  assign is_branch_if_nonzero = (is_b & funct3 == 3'b001);
+  assign is_jmp = (opcode == 7'b1101111);
+  assign alu_control = (opcode == 7'b0000011 | opcode == 7'b0100011) ? 3'b000 : // load and store
+                         (opcode == 7'b1100011) ? 3'b001 :
+                         3'b000; // add
+  
 endmodule
 
 module m_imm_gen(input wire w_clk,
@@ -140,16 +135,14 @@ module m_ex(
   wire is_reg_write;
   m_RF rf(w_clk, w_inst[19:15], w_inst[24:20], is_reg_write, w_inst[11:7], w_result, w_rs1_val, w_rs2_val);
   wire [31:0] w_imm;
-  wire [1:0] imm_src;
   wire alu_src;
-  wire is_mem_write;
   wire [1:0] result_src;
   wire is_branch_if_zero;
   wire is_branch_if_nonzero;
   wire [2:0] alu_control;
   wire is_jmp;
   wire is_j,is_b,is_s,is_r,is_u,is_i;
-  main_decoder dec(w_inst[6:0], w_inst[14:12], imm_src, alu_src, is_mem_write, result_src, is_reg_write, is_branch_if_zero, is_branch_if_nonzero, is_jmp, alu_control, is_j, is_b, is_s, is_r, is_u, is_i);
+  main_decoder dec(w_inst[6:0], w_inst[14:12], alu_src, result_src, is_reg_write, is_branch_if_zero, is_branch_if_nonzero, is_jmp, alu_control, is_j, is_b, is_s, is_r, is_u, is_i);
   m_imm_gen imm_gen(w_clk, w_inst, is_j, is_b, is_s, is_r, is_u, is_i, w_imm);
   
   m_mux second_operand_chooser(w_rs2_val, w_imm, alu_src, second_operand);
@@ -161,7 +154,7 @@ module m_ex(
   m_is_next_pc_jmp_br m(is_branch_if_zero, is_branch_if_nonzero, (w_alu_res == 0), is_jmp, is_pc_jmp_or_br);
 
   // Memory Access
-  m_mem mem(w_clk, w_alu_res, is_mem_write, w_rs2_val, w_mem_out);
+  m_mem mem(w_clk, w_alu_res, is_s, w_rs2_val, w_mem_out);
 
   // Write Back
   m_mux_2bit result_chooser(w_alu_res, w_mem_out, w_pc+4, 32'b0, result_src, w_result);
@@ -198,7 +191,6 @@ module m_top();
     $display("rs1_val:        %5d", ex.w_rs1_val);
     $display("rs2:            %5d", ex.w_inst[24:20]);
     $display("rs2_val:        %5d", ex.w_rs2_val);
-    $display("imm_src:        %2b", ex.imm_src);
     $display("imm:            %5d", $signed(ex.w_imm));
     $display("second_operand: %5d", ex.second_operand);
     $display("alu_control:    %3b", ex.alu_control);
