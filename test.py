@@ -151,7 +151,7 @@ insts9 = [
 assertions9 = [
     {"pc": 0},
     {"pc": 0, "rd": 1, "imm_u": 4294963200, "second_operand": 4294963200, "is_reg_write": 1, "result": 4294963200},
-    {"pc": 4, "x1": 4294963200}
+    {"pc": 4, "x1_u": 4294963200}
 ]
 
 insts10 = [
@@ -162,8 +162,8 @@ insts10 = [
 assertions10 = [
     {"pc": 0},
     {"pc": 0, "result": 4294963200},
-    {"pc": 4, "result": 4294963204, "x1": 4294963200}, # pc is updated here so result is updated to 4294963204. Is it okay to regard the status at the 1st cycle as undefined ?
-    {"pc": 4, "x1": 4294963204},
+    {"pc": 4, "result": 4294963204, "x1_u": 4294963200}, # pc is updated here so result is updated to 4294963204. Is it okay to regard the status at the 1st cycle as undefined ?
+    {"pc": 4, "x1_u": 4294963204},
 ]
 
 insts11 = [
@@ -211,9 +211,23 @@ assertions13 = [
     {"pc": 8, "result": 0},
 ]
 
+insts14 = [
+    "`MM[0]={12'b111111111111,5'd0,3'd0,5'd1,7'h13};     // addi x1, x0, -1",
+    "`MM[1]={7'd0,5'd1,5'd0,3'b010,5'b00010,7'b0110011};     // slt  x2, x0, x1",
+]
+
+assertions14 = [
+    {"pc": 0},
+    {"pc": 0},
+    {"pc": 4, "x1": -1},
+    {"pc": 4, "result": 0},
+    {"pc": 8, "x2": 0},
+]
+
 
 scenarios = [(insts0, assertions0), (insts2, assertions2), (insts3, assertions3), (insts4, assertions4), (insts5, assertions5), (insts6, assertions6), (insts7, assertions7),
-             (insts8, assertions8), (insts9, assertions9), (insts10, assertions10), (insts11, assertions11), (insts12, assertions12), (insts13, assertions13)]
+             (insts8, assertions8), (insts9, assertions9), (insts10, assertions10), (insts11, assertions11), (insts12, assertions12), (insts13, assertions13),
+             (insts14, assertions14)]
 
 for ith, (insts, assertions) in enumerate(scenarios, start=0):
     for j, inst in enumerate(insts):
